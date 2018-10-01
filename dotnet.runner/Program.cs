@@ -14,16 +14,16 @@ namespace dotnet.runner
         {
             if (args.Length == 0)
             {
-                Console.WriteLine("Usage: dotnet.runner <root folders...>");
+                Console.WriteLine("Usage: dotnet.runner <solutions...>");
                 return -1;
             }
 
             foreach (var arg in args)
             {
-                if (Directory.Exists(arg)) continue;
+                if (File.Exists(arg) && arg.EndsWith(".sln", StringComparison.OrdinalIgnoreCase)) continue;
 
-                Console.WriteLine($"Folder {arg} not found.");
-                Console.WriteLine("Usage: dotnet.runner <root folders...>");
+                Console.WriteLine($"Solution {arg} not found.");
+                Console.WriteLine("Usage: dotnet.runner <solutions...>");
                 return -1;
             }
 

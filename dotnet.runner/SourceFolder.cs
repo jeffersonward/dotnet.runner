@@ -9,9 +9,9 @@ namespace dotnet.runner
 {
     internal class SourceFolder
     {
-        public SourceFolder(IEnumerable<string> folders)
+        public SourceFolder(IEnumerable<string> solutionPaths)
         {
-            var solutions = folders.SelectMany(x => new DirectoryInfo(x).GetFiles("*.sln", SearchOption.AllDirectories))
+            var solutions = solutionPaths
                 .Select(ToSolution)
                 .Distinct()
                 .ToList();
@@ -20,8 +20,7 @@ namespace dotnet.runner
 
             foreach (var solution in solutions.OrderByDescending(x => x.Directory.FullName.ToLowerInvariant()))
             {
-                var projectFiles = solution.Directory
-                    .GetFiles("*.csproj", SearchOption.AllDirectories)
+                var projectFiles = GetProjects(solution)
                     .Where(x => !allProjects.Contains(x.FullName.ToLowerInvariant()))
                     .Where(IsNetcoreWebApp);
 
@@ -37,14 +36,24 @@ namespace dotnet.runner
 
         public IEnumerable<Solution> Solutions { get; }
 
-        private static Solution ToSolution(FileInfo file)
+        private static Solution ToSolution(string path)
         {
+            var file = new FileInfo(path);
             return new Solution { Name = Path.GetFileNameWithoutExtension(file.Name), Directory = file.Directory };
         }
 
         private static Project ToProject(FileInfo file)
         {
             return new Project { Name = Path.GetFileNameWithoutExtension(file.Name), Path = file.DirectoryName };
+        }
+
+        private static IEnumerable<FileInfo> GetProjects(Solution solution)
+        {
+            var contents = File.ReadAllLines(Path.Combine(solution.Directory.FullName, $"{solution.Name}.sln"));
+            return contents.Where(x => x.StartsWith("Project(\"{9A19103F-16F7-4668-BE54-9A1E7A4F7556}\")"))
+                .Select(x => x.Split(new[] { " = " }, StringSplitOptions.None)[1].Split(',')[1].Replace('"', ' ').Trim())
+                .Select(x => Path.Combine(solution.Directory.FullName, x))
+                .Select(x => new FileInfo(x));
         }
 
         private static bool IsNetcoreWebApp(FileInfo file)
