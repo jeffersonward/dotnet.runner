@@ -229,5 +229,10 @@ namespace dotnet.runner
         {
             richTextBoxOutput.Focus();
         }
+
+        private void richTextBoxOutput_LinkClicked(object sender, LinkClickedEventArgs e)
+        {
+            Process.Start(e.LinkText);
+        }
     }
 }

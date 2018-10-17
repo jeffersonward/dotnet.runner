@@ -108,6 +108,7 @@
             this.richTextBoxOutput.Size = new System.Drawing.Size(765, 283);
             this.richTextBoxOutput.TabIndex = 4;
             this.richTextBoxOutput.Text = "";
+            this.richTextBoxOutput.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this.richTextBoxOutput_LinkClicked);
             // 
             // RunnerControl
             // 
