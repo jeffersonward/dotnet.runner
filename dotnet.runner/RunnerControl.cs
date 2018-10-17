@@ -65,47 +65,46 @@ namespace dotnet.runner
             }
             else
             {
-                if (MatchesTraceLevel("INF", text, Color.Green, out var newText))
-                {
-                    text = newText;
-                }
-                else if (MatchesTraceLevel("DBG", text, Color.Cyan, out newText))
-                {
-                    text = newText;
-                }
-                else if (MatchesTraceLevel("WRN", text, Color.Orange, out newText))
-                {
-                    text = newText;
-                }
-                else if (MatchesTraceLevel("ERR", text, Color.Red, out newText))
-                {
-                    text = newText;
-                }
-                else if (MatchesTraceLevel("CRT", text, Color.MediumPurple, out newText))
-                {
-                    text = newText;
-                }
+                var start = richTextBoxOutput.TextLength;
 
-                richTextBoxOutput.AppendText(text + "\r\n");
+                richTextBoxOutput.AppendText(text);
+
+                HighlightLogLevel(text, start);
+                Highlight(HyperlinkRegex, start, text, Color.Blue);
+
+                richTextBoxOutput.AppendText("\r\n");
             }
         }
 
-        private void AppendText(string text, Color color)
+        private void HighlightLogLevel(string text, int start)
         {
+            if (Highlight(InfoRegex, start, text, Color.Green)) return;
+            if (Highlight(DebugRegex, start, text, Color.Cyan)) return;
+            if (Highlight(WarnRegex, start, text, Color.Orange)) return;
+            if (Highlight(ErrorRegex, start, text, Color.Red)) return;
+            Highlight(FatalRegex, start, text, Color.MediumPurple);
+        }
+
+        private bool Highlight(Regex pattern, int start, string text, Color color)
+        {
+            var matches = pattern.Matches(text);
+
+            if (matches.Count == 0) return false;
+
             var originalSelectionStart = richTextBoxOutput.SelectionStart;
             var originalSelectionLength = richTextBoxOutput.SelectionLength;
 
-            var selectionStart = richTextBoxOutput.TextLength;
-            richTextBoxOutput.AppendText(text);
-            richTextBoxOutput.Select(selectionStart, text.Length);
-            richTextBoxOutput.SelectionColor = color;
-
-            richTextBoxOutput.SelectionStart = richTextBoxOutput.TextLength;
-            richTextBoxOutput.SelectionLength = 0;
-            richTextBoxOutput.SelectionColor = Color.White;
+            for (var i = 0; i < matches.Count; i++)
+            {
+                var match = matches[i];
+                richTextBoxOutput.Select(start + match.Index, match.Length);
+                richTextBoxOutput.SelectionColor = color;
+            }
 
             richTextBoxOutput.SelectionStart = originalSelectionStart;
             richTextBoxOutput.SelectionLength = originalSelectionLength;
+
+            return true;
         }
 
         private void ButtonStartStop_Click(object sender, EventArgs e)
@@ -172,21 +171,6 @@ namespace dotnet.runner
             RunningStateChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        private bool MatchesTraceLevel(string level, string text, Color color, out string newText)
-        {
-            const string serilogPattern = @"^\[\d*\:\d*\:\d*[ ]{0}\]";
-            var regex = new Regex(string.Format(serilogPattern, level));
-
-            newText = text;
-
-            var match = regex.Match(text);
-            if (!match.Success && match.Index == 0) return false;
-
-            newText = text.Substring(match.Length);
-            AppendText(match.Value, color);
-            return true;
-        }
-
         private void Stop(string message)
         {
             if (!_process.HasExited)
@@ -234,5 +218,13 @@ namespace dotnet.runner
         {
             Process.Start(e.LinkText);
         }
+
+        private const string serilogPattern = @"^\[\d*\:\d*\:\d*[ ]{0}\][ ]";
+        private static readonly Regex InfoRegex = new Regex(string.Format(serilogPattern, "INF"));
+        private static readonly Regex DebugRegex = new Regex(string.Format(serilogPattern, "DBG"));
+        private static readonly Regex WarnRegex = new Regex(string.Format(serilogPattern, "WRN"));
+        private static readonly Regex ErrorRegex = new Regex(string.Format(serilogPattern, "ERR"));
+        private static readonly Regex FatalRegex = new Regex(string.Format(serilogPattern, "FTL"));
+        private static readonly Regex HyperlinkRegex = new Regex(@"((ht|f)tp(s?)\:\/\/([^ ]+))");
     }
 }
