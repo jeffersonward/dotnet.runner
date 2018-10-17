@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -64,23 +65,23 @@ namespace dotnet.runner
             }
             else
             {
-                if (StartsWithTraceLevel("info", text, Color.Green, out var newText))
+                if (MatchesTraceLevel("INF", text, Color.Green, out var newText))
                 {
                     text = newText;
                 }
-                else if (StartsWithTraceLevel("dbug", text, Color.Cyan, out newText))
+                else if (MatchesTraceLevel("DBG", text, Color.Cyan, out newText))
                 {
                     text = newText;
                 }
-                else if (StartsWithTraceLevel("warn", text, Color.Orange, out newText))
+                else if (MatchesTraceLevel("WRN", text, Color.Orange, out newText))
                 {
                     text = newText;
                 }
-                else if (StartsWithTraceLevel("error", text, Color.Red, out newText))
+                else if (MatchesTraceLevel("ERR", text, Color.Red, out newText))
                 {
                     text = newText;
                 }
-                else if (StartsWithTraceLevel("fail", text, Color.MediumPurple, out newText))
+                else if (MatchesTraceLevel("CRT", text, Color.MediumPurple, out newText))
                 {
                     text = newText;
                 }
@@ -171,13 +172,18 @@ namespace dotnet.runner
             RunningStateChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        private bool StartsWithTraceLevel(string level, string text, Color color, out string newText)
+        private bool MatchesTraceLevel(string level, string text, Color color, out string newText)
         {
-            newText = text;
-            if (!text.StartsWith(level + ":", StringComparison.OrdinalIgnoreCase)) return false;
+            const string serilogPattern = @"^\[\d*\:\d*\:\d*[ ]{0}\]";
+            var regex = new Regex(string.Format(serilogPattern, level));
 
-            newText = text.Substring((level + ":").Length);
-            AppendText(level + ":", color);
+            newText = text;
+
+            var match = regex.Match(text);
+            if (!match.Success && match.Index == 0) return false;
+
+            newText = text.Substring(match.Length);
+            AppendText(match.Value, color);
             return true;
         }
 
