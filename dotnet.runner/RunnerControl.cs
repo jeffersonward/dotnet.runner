@@ -219,12 +219,12 @@ namespace dotnet.runner
             Process.Start(e.LinkText);
         }
 
-        private const string serilogPattern = @"^\[\d*\:\d*\:\d*[ ]{0}\][ ]";
-        private static readonly Regex InfoRegex = new Regex(string.Format(serilogPattern, "INF"));
-        private static readonly Regex DebugRegex = new Regex(string.Format(serilogPattern, "DBG"));
-        private static readonly Regex WarnRegex = new Regex(string.Format(serilogPattern, "WRN"));
-        private static readonly Regex ErrorRegex = new Regex(string.Format(serilogPattern, "ERR"));
-        private static readonly Regex FatalRegex = new Regex(string.Format(serilogPattern, "FTL"));
+        private const string SerilogPattern = @"^(\[\d{{2}}\:\d{{2}}\:\d{{2}}[ ]{0}\][ ]|\d{{2}}\:\d{{2}}\:\d{{2}}[ ]\[{0}\][ ])";
+        private static readonly Regex InfoRegex = new Regex(string.Format(SerilogPattern, "INF"));
+        private static readonly Regex DebugRegex = new Regex(string.Format(SerilogPattern, "DBG"));
+        private static readonly Regex WarnRegex = new Regex(string.Format(SerilogPattern, "WRN"));
+        private static readonly Regex ErrorRegex = new Regex(string.Format(SerilogPattern, "ERR"));
+        private static readonly Regex FatalRegex = new Regex(string.Format(SerilogPattern, "FTL"));
         private static readonly Regex HyperlinkRegex = new Regex(@"((ht|f)tp(s?)\:\/\/([^ ]+))");
     }
 }
