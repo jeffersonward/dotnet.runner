@@ -78,6 +78,7 @@ namespace dotnet.runner
 
         private void HighlightLogLevel(string text, int start)
         {
+            if (Highlight(Verbosegex, start, text, Color.Gray)) return;
             if (Highlight(InfoRegex, start, text, Color.Green)) return;
             if (Highlight(DebugRegex, start, text, Color.Cyan)) return;
             if (Highlight(WarnRegex, start, text, Color.Orange)) return;
@@ -220,6 +221,7 @@ namespace dotnet.runner
         }
 
         private const string SerilogPattern = @"^(\[\d{{2}}\:\d{{2}}\:\d{{2}}[ ]{0}\][ ]|\d{{2}}\:\d{{2}}\:\d{{2}}[ ]\[{0}\][ ])";
+        private static readonly Regex Verbosegex = new Regex(string.Format(SerilogPattern, "VRB"));
         private static readonly Regex InfoRegex = new Regex(string.Format(SerilogPattern, "INF"));
         private static readonly Regex DebugRegex = new Regex(string.Format(SerilogPattern, "DBG"));
         private static readonly Regex WarnRegex = new Regex(string.Format(SerilogPattern, "WRN"));
